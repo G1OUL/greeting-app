@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Greeting Collage</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    .card { min-height: 500px; position: relative; overflow: hidden; border-radius: 1rem; }
+    #slideshow img {
+      position: absolute; object-fit: cover; border-radius: 12px;
+      animation: floatPhoto 6s ease-in-out infinite alternate;
+      transition: opacity 0.5s;
+    }
+    #slideshow p {
+      position: absolute; font-size: 1.1rem; font-weight: bold;
+      background: rgba(255,255,255,0.8); padding: 6px 14px; border-radius: 8px;
+      animation: fadeInOut 4s ease-in-out infinite; max-width: 200px;
+    }
+    @keyframes floatPhoto { from { transform: translateY(0) scale(1); } to { transform: translateY(-15px) scale(1.05); } }
+    @keyframes fadeInOut { 0% { opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+    .confetti {
+      position: absolute; border-radius: 50%; opacity: 0.9;
+      animation: fall 3s linear forwards;
+    }
+    @keyframes fall { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(600px) rotate(720deg); opacity: 0; } }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="container mx-auto px-4 py-8">
+    <header class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-indigo-600">✨ Photo Greeting Collage ✨</h1>
+      <p class="text-gray-600 mt-2">Upload photos, add messages, download or share 🎉</p>
+    </header>
+
+    <!-- Greeting Card -->
+    <div id="greetingCard" class="card bg-gray-200 shadow-lg flex items-center justify-center relative">
+      <div id="slideshow" class="w-full h-full"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="mt-8 flex flex-col items-center space-y-4">
+      <input type="file" id="photoUpload" accept="image/*" multiple 
+             class="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg cursor-pointer bg-white"
+             onchange="addPhotos(this)">
+
+      <textarea id="messagesInput" rows="3" placeholder="Enter messages separated by commas"
+                class="w-full md:w-1/2 p-3 rounded-lg border border-gray-300 focus:ring focus:ring-indigo-300"></textarea>
+
+      <div class="flex flex-wrap gap-4">
+        <button onclick="showMessages()" 
+                class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition">
+          💬 Show Messages
+        </button>
+        <button onclick="downloadGreeting()"
+                class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition">
+          ⬇️ Download Greeting
+        </button>
+        <button onclick="shareOnWhatsApp()"
+                class="px-6 py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition">
+          📲 Share on WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function addPhotos(input) {
+      const slideshow = document.getElementById("slideshow");
+      Array.from(input.files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          const size = Math.floor(Math.random() * 100) + 150;
+          img.style.width = size + "px";
+          img.style.height = Math.floor(size * 0.7) + "px";
+          img.style.top = Math.floor(Math.random() * 250 + 20) + "px";
+          img.style.left = Math.floor(Math.random() * 250 + 20) + "px";
+          img.style.opacity = 0;
+          setTimeout(() => { img.style.opacity = 1; }, 100);
+          slideshow.appendChild(img);
+          launchConfetti();
+        };
+        reader.readAsDataURL(file);
+      });
+      input.value = "";
+    }
+
+    function showMessages() {
+      const messages = document.getElementById("messagesInput").value
+        .split(",").map(m => m.trim()).filter(m => m);
+      const slideshow = document.getElementById("slideshow");
+      messages.forEach((msg, i) => {
+        const p = document.createElement("p");
+        p.innerText = msg;
+        p.style.top = Math.floor(Math.random() * 250 + 20) + "px";
+        p.style.left = Math.floor(Math.random() * 200 + 20) + "px";
+        p.style.animationDelay = (i * 2) + "s";
+        slideshow.appendChild(p);
+      });
+    }
+
+    function launchConfetti() {
+      const card = document.getElementById("greetingCard");
+      const colors = ["#FF595E","#FFCA3A","#8AC926","#1982C4","#6A4C93","#FF69B4"];
+      for (let i = 0; i < 12; i++) {
+        const confetti = document.createElement("div");
+        confetti.classList.add("confetti");
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = Math.random() * card.offsetWidth + "px";
+        confetti.style.top = "-10px";
+        confetti.style.width = Math.random() * 6 + 6 + "px";
+        confetti.style.height = confetti.style.width;
+        card.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 3000);
+      }
+    }
+
+    function downloadGreeting() {
+      const card = document.getElementById("greetingCard");
+      html2canvas(card, { useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "greeting.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    function shareOnWhatsApp() {
+      const card = document.getElementById("greetingCard");
+      html2canvas(card, { useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+        const imgData = canvas.toDataURL();
+        // Create a temporary link
+        const link = document.createElement("a");
+        link.href = imgData;
+        link.download = "greeting.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // WhatsApp text message with note
+        const text = encodeURIComponent("🌸 Here’s a special greeting I made for you! 🌸");
+        window.open(`https://wa.me/?text=${text}`, "_blank");
+      });
+    }
+  </script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("✅ Service Worker Registered"));
+}
+</script>
+</body>
+</html>
